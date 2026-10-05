@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_os_badge %}
+{% block title %}{{ cliente.nome_exibicao }}{% endblock %}
+{% block page_title %}{{ cliente.nome_exibicao }}{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('ordens.nova', cliente_id=cliente.id) }}" class="btn btn-success btn-sm"><i class="bi bi-clipboard2-plus"></i> Nova OS</a>
+<a href="{{ url_for('clientes.editar', id=cliente.id) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Editar</a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-person-vcard"></i> Dados Cadastrais</div>
+      <div class="card-body">
+        <p class="mb-1"><strong>{{ 'CNPJ' if cliente.tipo_pessoa == 'Pessoa Jurídica' else 'CPF' }}:</strong> {{ cliente.cpf_cnpj }}</p>
+        {% if cliente.nome_fantasia %}<p class="mb-1"><strong>Nome Fantasia:</strong> {{ cliente.nome_fantasia }}</p>{% endif %}
+        {% if cliente.contato %}<p class="mb-1"><strong>Contato:</strong> {{ cliente.contato }}</p>{% endif %}
+        <p class="mb-1"><strong>Telefone:</strong> {{ cliente.telefone }}{% if cliente.telefone2 %} / {{ cliente.telefone2 }}{% endif %}</p>
+        <p class="mb-1"><strong>E-mail:</strong> {{ cliente.email or '-' }}</p>
+        <p class="mb-1"><strong>Endereço:</strong> {{ cliente.endereco_completo or '-' }}</p>
+        {% if cliente.observacoes %}<p class="mb-0"><strong>Observações:</strong> {{ cliente.observacoes }}</p>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clipboard2-pulse"></i> Ordens de Serviço</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Nº</th><th>Equipamento</th><th>Entrada</th><th>Status</th><th>Valor</th><th></th></tr></thead>
+          <tbody>
+            {% for o in cliente.ordens|sort(attribute='data_cadastro', reverse=True) %}
+            <tr>
+              <td><strong>{{ o.numero }}</strong></td>
+              <td>{{ o.equipamento.tipo }} {{ o.equipamento.marca or '' }} {{ o.equipamento.modelo or '' }}</td>
+              <td>{{ o.data_entrada | data }}</td>
+              <td>{{ status_os_badge(o.status) }}</td>
+              <td>{{ o.valor_total | moeda }}</td>
+              <td class="text-end"><a href="{{ url_for('ordens.detalhe', id=o.id) }}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="empty-state">Nenhuma ordem de serviço para este cliente ainda.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

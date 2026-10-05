@@ -1,0 +1,43 @@
+{% macro status_os_badge(status) -%}
+  {% set classe = {
+    "Aberta / Aguardando avaliação": "status-aberta",
+    "Na bancada": "status-bancada",
+    "Aguardando aprovação do orçamento": "status-aguardando",
+    "Aguardando peça": "status-aguardando",
+    "Em conserto": "status-bancada",
+    "Equipamento pronto": "status-pronto",
+    "Equipamento entregue": "status-entregue",
+    "Equipamento condenado": "status-condenado",
+    "Cancelada": "status-cancelada",
+  }.get(status, "status-aberta") %}
+  <span class="badge-status {{ classe }}">{{ status }}</span>
+{%- endmacro %}
+
+{% macro status_financeiro_badge(status) -%}
+  {% set classe = {
+    "Pendente": "badge-pendente",
+    "Pago": "badge-pago",
+    "Atrasado": "badge-atrasado",
+    "Cancelado": "badge-cancelado",
+  }.get(status, "badge-pendente") %}
+  <span class="badge-status {{ classe }}">{{ status }}</span>
+{%- endmacro %}
+
+{% macro status_venda_badge(status) -%}
+  {% set classe = {
+    "Concluída": "badge-pago",
+    "Cancelada": "badge-cancelado",
+    "Fiado (a receber)": "badge-pendente",
+  }.get(status, "badge-pendente") %}
+  <span class="badge-status {{ classe }}">{{ status }}</span>
+{%- endmacro %}
+
+{% macro status_nf_badge(status) -%}
+  {% set classe = {
+    "Pendente de conferência": "badge-pendente",
+    "Conferida": "badge-pago",
+    "Divergente": "badge-atrasado",
+    "Cancelada": "badge-cancelado",
+  }.get(status, "badge-pendente") %}
+  <span class="badge-status {{ classe }}">{{ status }}</span>
+{%- endmacro %}

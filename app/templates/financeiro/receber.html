@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Contas a Receber{% endblock %}
+{% block page_title %}Contas a Receber{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('financeiro.novo_receber') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Nova</a>
+{% endblock %}
+
+{% block content %}
+<div class="kpi-card mb-3" style="max-width: 320px;">
+  <div class="icon bg-verde"><i class="bi bi-arrow-down-circle"></i></div>
+  <div><div class="value">{{ total_pendente | moeda }}</div><div class="label">Total pendente a receber</div></div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="d-flex gap-2">
+      <select name="status" class="form-select" style="max-width: 220px;" onchange="this.form.submit()">
+        <option value="">Todos os status</option>
+        {% for s in status_lista %}
+        <option value="{{ s }}" {{ 'selected' if status_filtro == s }}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0 grade-densa">
+      <thead><tr><th>Nº</th><th>Cliente</th><th>Origem</th><th>Vencimento</th><th class="text-end">Valor</th><th class="text-center">Pg?</th><th>Observações</th><th></th></tr></thead>
+      <tbody>
+        {% for c in contas %}
+        <tr class="{{ 'table-danger' if c.status == 'Atrasado' else ('table-success' if c.status == 'Pago' else '') }}">
+          <td>{{ '%03d' % c.id }}</td>
+          <td>{{ c.cliente.nome_exibicao if c.cliente else '-' }}</td>
+          <td>{{ c.origem }}</td>
+          <td>{{ c.data_vencimento | data }}</td>
+          <td class="text-end">{{ c.valor | moeda }}</td>
+          <td class="text-center">
+            {% if c.status == 'Pago' %}<i class="bi bi-check-square-fill text-success"></i>{% else %}<i class="bi bi-square text-muted"></i>{% endif %}
+          </td>
+          <td class="small text-muted">{{ c.descricao }}</td>
+          <td class="text-end">
+            {% if c.status in ('Pendente', 'Atrasado') %}
+            <form method="POST" action="{{ url_for('financeiro.baixar_receber', id=c.id) }}" class="d-inline">
+              <input type="hidden" name="forma_pagamento" value="{{ c.forma_pagamento or 'Dinheiro' }}">
+              <button class="btn btn-sm btn-outline-success py-0" title="Confirmar recebimento"><i class="bi bi-check-lg"></i></button>
+            </form>
+            <form method="POST" action="{{ url_for('financeiro.cancelar_receber', id=c.id) }}" class="d-inline" onsubmit="return confirm('Cancelar esta conta?');">
+              <button class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-x-lg"></i></button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty-state"><i class="bi bi-cash-coin"></i>Nenhuma conta a receber lançada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

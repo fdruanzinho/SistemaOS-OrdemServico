@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>OS {{ ordem.numero }} - Impressão</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  body { padding: 2rem; font-size: .9rem; }
+  .assinatura { border-top: 1px solid #333; margin-top: 3rem; padding-top: .3rem; text-align: center; width: 300px; }
+  table.itens th, table.itens td { padding: .3rem .5rem; }
+  @media print { .btn-print { display: none; } }
+</style>
+</head>
+<body>
+
+<button class="btn btn-primary btn-print mb-3" onclick="window.print()">Imprimir</button>
+
+<div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+  <div>
+    <h4 class="mb-0">{{ config.EMPRESA_NOME }}</h4>
+    <div class="small">{{ config.EMPRESA_ENDERECO }}</div>
+    <div class="small">{{ config.EMPRESA_TELEFONE }} {% if config.EMPRESA_CNPJ %}| CNPJ: {{ config.EMPRESA_CNPJ }}{% endif %}</div>
+  </div>
+  <div class="text-end">
+    <h4>OS {{ ordem.numero }}</h4>
+    <div class="small">Data de entrada: {{ ordem.data_entrada | data(true) }}</div>
+    <div class="small">Status: {{ ordem.status }}</div>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col-6">
+    <h6>Cliente</h6>
+    <div>{{ ordem.cliente.nome_exibicao }}</div>
+    <div>{{ 'CNPJ' if ordem.cliente.tipo_pessoa == 'Pessoa Jurídica' else 'CPF' }}: {{ ordem.cliente.cpf_cnpj }}</div>
+    <div>Tel: {{ ordem.cliente.telefone }}</div>
+    <div>{{ ordem.cliente.endereco_completo }}</div>
+  </div>
+  <div class="col-6">
+    <h6>Equipamento</h6>
+    <div>Item: {{ ordem.equipamento.tipo }}</div>
+    <div>Marca/Modelo: {{ ordem.equipamento.marca or '-' }} {{ ordem.equipamento.modelo or '' }}</div>
+    <div>Nº de Série: {{ ordem.equipamento.numero_serie or '-' }}</div>
+    <div>Acompanha: {{ ordem.equipamento.acessorios or '-' }}</div>
+  </div>
+</div>
+
+<h6>Defeito Relatado</h6>
+<p>{{ ordem.defeito_relatado }}</p>
+
+{% if ordem.laudo_tecnico %}
+<h6>Laudo Técnico</h6>
+<p>{{ ordem.laudo_tecnico }}</p>
+{% endif %}
+
+{% if ordem.itens %}
+<h6>Peças e Serviços</h6>
+<table class="table table-sm itens">
+  <thead><tr><th>Tipo</th><th>Descrição</th><th>Qtd</th><th>Vlr. Unit.</th><th>Total</th></tr></thead>
+  <tbody>
+    {% for i in ordem.itens %}
+    <tr><td>{{ i.tipo }}</td><td>{{ i.descricao }}</td><td>{{ i.quantidade }}</td><td>{{ i.valor_unitario | moeda }}</td><td>{{ i.valor_total | moeda }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<table class="table table-sm w-50 ms-auto">
+  <tr><td>Total</td><td class="text-end">{{ ordem.valor_total | moeda }}</td></tr>
+  <tr><td>Adiantamento</td><td class="text-end">{{ ordem.valor_adiantamento | moeda }}</td></tr>
+  <tr class="fw-bold"><td>Saldo Pendente</td><td class="text-end">{{ ordem.valor_pendente | moeda }}</td></tr>
+</table>
+
+<p class="small mt-3">Garantia de {{ ordem.garantia_dias }} dias sobre o serviço/peça, contados a partir da data de entrega, cobrindo exclusivamente o defeito reparado.</p>
+
+<div class="d-flex justify-content-around mt-5">
+  <div class="assinatura">{{ config.EMPRESA_NOME }}</div>
+  <div class="assinatura">{{ ordem.cliente.nome_exibicao }} (Cliente)</div>
+</div>
+
+</body>
+</html>

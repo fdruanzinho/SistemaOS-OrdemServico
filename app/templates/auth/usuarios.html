@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Usuários{% endblock %}
+{% block page_title %}Usuários / Técnicos{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('auth.novo_usuario') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Novo Usuário</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td>{{ u.nome }} {% if u.is_admin %}<span class="badge bg-secondary">Admin</span>{% endif %}</td>
+          <td>{{ u.email }}</td>
+          <td>{{ u.cargo }}</td>
+          <td>
+            {% if u.ativo %}<span class="badge-status badge-pago">Ativo</span>
+            {% else %}<span class="badge-status badge-cancelado">Inativo</span>{% endif %}
+          </td>
+          <td class="text-end">
+            <form method="POST" action="{{ url_for('auth.toggle_usuario', id=u.id) }}" class="d-inline">
+              <button class="btn btn-sm btn-outline-secondary">{{ 'Inativar' if u.ativo else 'Ativar' }}</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty-state">Nenhum usuário cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

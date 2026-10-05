@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_financeiro_badge %}
+{% block title %}Contas a Pagar{% endblock %}
+{% block page_title %}Contas a Pagar{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('financeiro.novo_pagar') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Novo Lançamento</a>
+{% endblock %}
+
+{% block content %}
+<div class="kpi-card mb-3" style="max-width: 320px;">
+  <div class="icon bg-vermelho"><i class="bi bi-arrow-up-circle"></i></div>
+  <div><div class="value">{{ total_pendente | moeda }}</div><div class="label">Total pendente a pagar</div></div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="d-flex gap-2">
+      <select name="status" class="form-select" style="max-width: 220px;" onchange="this.form.submit()">
+        <option value="">Todos os status</option>
+        {% for s in status_lista %}
+        <option value="{{ s }}" {{ 'selected' if status_filtro == s }}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Descrição</th><th>Fornecedor</th><th>Categoria</th><th>Origem</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for c in contas %}
+        <tr>
+          <td>{{ c.descricao }}</td>
+          <td>{{ c.fornecedor_nome or '-' }}</td>
+          <td>{{ c.categoria or '-' }}</td>
+          <td>{{ c.origem }}</td>
+          <td>{{ c.data_vencimento | data }}</td>
+          <td>{{ c.valor | moeda }}</td>
+          <td>{{ status_financeiro_badge(c.status) }}</td>
+          <td class="text-end">
+            {% if c.status in ('Pendente', 'Atrasado') %}
+            <form method="POST" action="{{ url_for('financeiro.baixar_pagar', id=c.id) }}" class="d-inline">
+              <input type="hidden" name="forma_pagamento" value="{{ c.forma_pagamento or 'Dinheiro' }}">
+              <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i> Confirmar Pagamento</button>
+            </form>
+            <form method="POST" action="{{ url_for('financeiro.cancelar_pagar', id=c.id) }}" class="d-inline" onsubmit="return confirm('Cancelar esta conta?');">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty-state"><i class="bi bi-cash-stack"></i>Nenhuma conta a pagar lançada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

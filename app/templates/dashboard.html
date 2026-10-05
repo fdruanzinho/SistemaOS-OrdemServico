@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_os_badge %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('ordens.nova') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Nova OS</a>
+<a href="{{ url_for('vendas.nova') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-cart-plus"></i> Nova Venda</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card">
+      <div class="icon bg-azul"><i class="bi bi-clipboard2-pulse"></i></div>
+      <div><div class="value">{{ qtd_ordens_abertas }}</div><div class="label">Ordens em andamento</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card">
+      <div class="icon bg-verde"><i class="bi bi-check-circle"></i></div>
+      <div><div class="value">{{ qtd_ordens_prontas }}</div><div class="label">Equipamentos prontos</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card">
+      <div class="icon bg-laranja"><i class="bi bi-cart3"></i></div>
+      <div><div class="value">{{ total_vendido_hoje | moeda }}</div><div class="label">Vendido hoje ({{ qtd_vendas_hoje }} vendas)</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card">
+      <div class="icon bg-roxo"><i class="bi bi-people"></i></div>
+      <div><div class="value">{{ total_clientes }}</div><div class="label">Clientes ativos</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="kpi-card">
+      <div class="icon bg-verde"><i class="bi bi-arrow-down-circle"></i></div>
+      <div><div class="value">{{ total_a_receber | moeda }}</div><div class="label">A receber (pendente)</div></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="kpi-card">
+      <div class="icon bg-vermelho"><i class="bi bi-arrow-up-circle"></i></div>
+      <div><div class="value">{{ total_a_pagar | moeda }}</div><div class="label">A pagar (pendente)</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-clock-history"></i> Últimas Ordens de Serviço</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Nº</th><th>Cliente</th><th>Equipamento</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for o in ultimas_ordens %}
+            <tr>
+              <td><strong>{{ o.numero }}</strong></td>
+              <td>{{ o.cliente.nome_exibicao }}</td>
+              <td>{{ o.equipamento.tipo }}</td>
+              <td>{{ status_os_badge(o.status) }}</td>
+              <td class="text-end"><a href="{{ url_for('ordens.detalhe', id=o.id) }}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="empty-state">Nenhuma ordem de serviço cadastrada ainda.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if produtos_estoque_baixo %}
+    <div class="card border-warning">
+      <div class="card-header text-warning-emphasis"><i class="bi bi-exclamation-triangle"></i> Produtos com estoque baixo</div>
+      <ul class="list-group list-group-flush">
+        {% for p in produtos_estoque_baixo %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>{{ p.nome }}</span>
+          <span class="text-danger fw-bold">{{ p.quantidade_estoque }} {{ p.unidade }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-calendar-event"></i> Vencendo em 7 dias</div>
+      <ul class="list-group list-group-flush">
+        {% for c in contas_receber_vencendo %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span><i class="bi bi-arrow-down-circle text-success"></i> {{ c.descricao }}</span>
+          <span>{{ c.valor | moeda }}</span>
+        </li>
+        {% endfor %}
+        {% for c in contas_pagar_vencendo %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span><i class="bi bi-arrow-up-circle text-danger"></i> {{ c.descricao }}</span>
+          <span>{{ c.valor | moeda }}</span>
+        </li>
+        {% endfor %}
+        {% if not contas_receber_vencendo and not contas_pagar_vencendo %}
+        <li class="list-group-item empty-state py-3">Nada vencendo nos próximos 7 dias.</li>
+        {% endif %}
+      </ul>
+    </div>
+
+    {% if contas_receber_atrasadas or contas_pagar_atrasadas %}
+    <div class="card border-danger">
+      <div class="card-header text-danger"><i class="bi bi-exclamation-circle"></i> Contas atrasadas</div>
+      <ul class="list-group list-group-flush">
+        {% for c in contas_receber_atrasadas %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span><i class="bi bi-arrow-down-circle text-success"></i> {{ c.descricao }}</span>
+          <span>{{ c.valor | moeda }}</span>
+        </li>
+        {% endfor %}
+        {% for c in contas_pagar_atrasadas %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span><i class="bi bi-arrow-up-circle text-danger"></i> {{ c.descricao }}</span>
+          <span>{{ c.valor | moeda }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

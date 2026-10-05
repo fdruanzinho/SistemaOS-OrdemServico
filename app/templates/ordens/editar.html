@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Editar OS {{ ordem.numero }}{% endblock %}
+{% block page_title %}Editar Ordem de Serviço {{ ordem.numero }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <div class="form-section-title">Equipamento</div>
+      <div class="row g-3 mb-2">
+        <div class="col-md-4">
+          <label class="form-label">Tipo</label>
+          <select name="tipo" class="form-select">
+            {% for t in tipos_equipamento %}
+            <option value="{{ t }}" {{ 'selected' if ordem.equipamento.tipo == t }}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Marca</label>
+          <input type="text" name="marca" class="form-control" value="{{ ordem.equipamento.marca or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Modelo</label>
+          <input type="text" name="modelo" class="form-control" value="{{ ordem.equipamento.modelo or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Número de Série</label>
+          <input type="text" name="numero_serie" class="form-control" value="{{ ordem.equipamento.numero_serie or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Cor</label>
+          <input type="text" name="cor" class="form-control" value="{{ ordem.equipamento.cor or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Senha de acesso</label>
+          <input type="text" name="senha_acesso" class="form-control" value="{{ ordem.equipamento.senha_acesso or '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Acessórios</label>
+          <input type="text" name="acessorios" class="form-control" value="{{ ordem.equipamento.acessorios or '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Condição de entrada</label>
+          <input type="text" name="condicao_entrada" class="form-control" value="{{ ordem.equipamento.condicao_entrada or '' }}">
+        </div>
+      </div>
+
+      <div class="form-section-title">Ordem de Serviço</div>
+      <div class="row g-3 mb-2">
+        <div class="col-12">
+          <label class="form-label">Defeito relatado</label>
+          <textarea name="defeito_relatado" class="form-control" rows="3">{{ ordem.defeito_relatado }}</textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Observações internas</label>
+          <textarea name="observacoes" class="form-control" rows="2">{{ ordem.observacoes or '' }}</textarea>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Previsão de entrega</label>
+          <input type="date" name="data_previsao" class="form-control" value="{{ ordem.data_previsao.isoformat() if ordem.data_previsao else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Garantia (dias)</label>
+          <input type="number" name="garantia_dias" class="form-control" value="{{ ordem.garantia_dias }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Valor orçado</label>
+          <input type="text" name="valor_orcamento" class="form-control" value="{{ '%.2f' % ordem.valor_orcamento }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Desconto</label>
+          <input type="text" name="valor_desconto" class="form-control" value="{{ '%.2f' % ordem.valor_desconto }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Adiantamento</label>
+          <input type="text" name="valor_adiantamento" class="form-control" value="{{ '%.2f' % ordem.valor_adiantamento }}">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Salvar Alterações</button>
+      <a href="{{ url_for('ordens.detalhe', id=ordem.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

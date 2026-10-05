@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_os_badge %}
+{% block title %}Ordens de Serviço{% endblock %}
+{% block page_title %}Ordens de Serviço{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('ordens.nova') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Nova OS</a>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <input type="text" name="q" value="{{ busca }}" class="form-control" placeholder="Buscar por número ou cliente...">
+      </div>
+      <div class="col-md-4">
+        <select name="status" class="form-select" onchange="this.form.submit()">
+          <option value="">Todos os status em andamento</option>
+          {% for s in status_lista %}
+          <option value="{{ s }}" {{ 'selected' if status_filtro == s }}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-auto">
+        <button class="btn btn-outline-primary"><i class="bi bi-search"></i> Buscar</button>
+      </div>
+      <div class="col-md-auto">
+        <a href="{{ url_for('ordens.listar', todas=1) }}" class="btn btn-link">Ver todas (inclui finalizadas)</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>Nº</th><th>Cliente</th><th>Equipamento</th><th>Entrada</th><th>Técnico</th><th>Status</th><th>Valor</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for o in ordens %}
+        <tr>
+          <td><strong>{{ o.numero }}</strong></td>
+          <td>{{ o.cliente.nome_exibicao }}</td>
+          <td>{{ o.equipamento.tipo }}{% if o.equipamento.marca %} - {{ o.equipamento.marca }}{% endif %}</td>
+          <td>{{ o.data_entrada | data }}</td>
+          <td>{{ o.tecnico.nome if o.tecnico else '-' }}</td>
+          <td>{{ status_os_badge(o.status) }}</td>
+          <td>{{ o.valor_total | moeda }}</td>
+          <td class="text-end"><a href="{{ url_for('ordens.detalhe', id=o.id) }}" class="btn btn-sm btn-outline-primary">Abrir</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty-state"><i class="bi bi-clipboard2-x"></i>Nenhuma ordem de serviço encontrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

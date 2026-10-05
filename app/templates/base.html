@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Sistema{% endblock %} - {{ config.EMPRESA_NOME }}</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<nav class="sidebar" id="sidebar">
+  <div class="brand">
+    <strong><i class="bi bi-tools"></i> {{ config.EMPRESA_NOME }}</strong>
+    <small>Sistema de Gestão Técnica</small>
+  </div>
+
+  <div class="nav-section-title">Principal</div>
+  <a href="{{ url_for('main.dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'main.dashboard' }}">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+  <a href="{{ url_for('agenda.listar') }}" class="nav-link {{ 'active' if request.blueprint == 'agenda' }}">
+    <i class="bi bi-calendar-week"></i> Agenda
+  </a>
+
+  <div class="nav-section-title">Atendimento</div>
+  <a href="{{ url_for('clientes.listar') }}" class="nav-link {{ 'active' if request.blueprint == 'clientes' }}">
+    <i class="bi bi-people"></i> Clientes
+  </a>
+  <a href="{{ url_for('ordens.listar') }}" class="nav-link {{ 'active' if request.blueprint == 'ordens' }}">
+    <i class="bi bi-clipboard2-pulse"></i> Ordens de Serviço
+  </a>
+
+  <div class="nav-section-title">Comercial</div>
+  <a href="{{ url_for('vendas.listar') }}" class="nav-link {{ 'active' if request.blueprint == 'vendas' }}">
+    <i class="bi bi-cart3"></i> Vendas
+  </a>
+  <a href="{{ url_for('estoque.listar') }}" class="nav-link {{ 'active' if request.blueprint == 'estoque' }}">
+    <i class="bi bi-boxes"></i> Estoque
+  </a>
+
+  <div class="nav-section-title">Financeiro</div>
+  <a href="{{ url_for('financeiro.receber') }}" class="nav-link {{ 'active' if request.endpoint and 'financeiro.receber' in request.endpoint or (request.endpoint and 'novo_receber' in request.endpoint) }}">
+    <i class="bi bi-arrow-down-circle"></i> Contas a Receber
+  </a>
+  <a href="{{ url_for('financeiro.pagar') }}" class="nav-link {{ 'active' if request.endpoint and ('financeiro.pagar' in request.endpoint or 'novo_pagar' in request.endpoint) }}">
+    <i class="bi bi-arrow-up-circle"></i> Contas a Pagar
+  </a>
+
+  {% if current_user.is_admin %}
+  <div class="nav-section-title">Administração</div>
+  <a href="{{ url_for('auth.usuarios') }}" class="nav-link {{ 'active' if request.blueprint == 'auth' and 'usuario' in request.endpoint }}">
+    <i class="bi bi-person-gear"></i> Usuários / Técnicos
+  </a>
+  {% endif %}
+
+  <div class="user-box">
+    <div><i class="bi bi-person-circle"></i> {{ current_user.nome }}</div>
+    <div>{{ current_user.cargo }}</div>
+    <a href="{{ url_for('auth.logout') }}" class="text-white-50"><i class="bi bi-box-arrow-right"></i> Sair</a>
+  </div>
+</nav>
+{% endif %}
+
+<div class="{{ 'main-content' if current_user.is_authenticated else '' }}">
+  {% if current_user.is_authenticated %}
+  <div class="topbar no-print">
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-secondary sidebar-toggle" id="btnToggleSidebar"><i class="bi bi-list"></i></button>
+      <h1>{% block page_title %}{% endblock %}</h1>
+    </div>
+    <div>{% block topbar_actions %}{% endblock %}</div>
+  </div>
+  {% endif %}
+
+  <div class="page-body">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'danger' else category }} alert-dismissible fade show no-print" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="{{ url_for('static', filename='js/pix.js') }}"></script>
+<script>
+document.getElementById('btnToggleSidebar')?.addEventListener('click', function() {
+  document.getElementById('sidebar').classList.toggle('show');
+});
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

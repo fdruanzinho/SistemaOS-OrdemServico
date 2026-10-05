@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_os_badge %}
+{% block title %}OS {{ ordem.numero }}{% endblock %}
+{% block page_title %}Ordem de Serviço {{ ordem.numero }}{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('ordens.imprimir', id=ordem.id) }}" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer"></i> Imprimir</a>
+<a href="{{ url_for('ordens.editar', id=ordem.id) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Editar</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>{{ status_os_badge(ordem.status) }} <span class="text-muted ms-2">Aberta em {{ ordem.data_entrada | data(true) }}</span></div>
+  <div class="fw-bold fs-5">{{ ordem.valor_total | moeda }} <span class="text-muted fs-6">total</span></div>
+</div>
+
+<div class="row g-3">
+  <!-- Coluna principal -->
+  <div class="col-lg-8">
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-pc-display"></i> Cliente e Equipamento</div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Cliente:</strong> <a href="{{ url_for('clientes.detalhe', id=ordem.cliente.id) }}">{{ ordem.cliente.nome_exibicao }}</a></p>
+            <p class="mb-1"><strong>Telefone:</strong> {{ ordem.cliente.telefone }}</p>
+            <p class="mb-0"><strong>Documento:</strong> {{ ordem.cliente.cpf_cnpj }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Item:</strong> {{ ordem.equipamento.tipo }}</p>
+            <p class="mb-1"><strong>Marca/Modelo:</strong> {{ ordem.equipamento.marca or '-' }} {{ ordem.equipamento.modelo or '' }}</p>
+            <p class="mb-1"><strong>Nº Série:</strong> {{ ordem.equipamento.numero_serie or '-' }}</p>
+            {% if ordem.equipamento.acessorios %}<p class="mb-1"><strong>Acompanha:</strong> {{ ordem.equipamento.acessorios }}</p>{% endif %}
+            {% if ordem.equipamento.condicao_entrada %}<p class="mb-0"><strong>Condição na entrada:</strong> {{ ordem.equipamento.condicao_entrada }}</p>{% endif %}
+          </div>
+        </div>
+        <hr>
+        <p class="mb-1"><strong>Defeito relatado:</strong> {{ ordem.defeito_relatado }}</p>
+        {% if ordem.observacoes %}<p class="mb-0"><strong>Observações internas:</strong> {{ ordem.observacoes }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-file-earmark-medical"></i> Laudo Técnico</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('ordens.atualizar_laudo', id=ordem.id) }}">
+          <textarea name="laudo_tecnico" class="form-control mb-2" rows="4" placeholder="Descreva o diagnóstico técnico, causa do problema e solução aplicada...">{{ ordem.laudo_tecnico or '' }}</textarea>
+          <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-save"></i> Salvar Laudo</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-camera"></i> Fotos do Equipamento</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('ordens.upload_foto', id=ordem.id) }}" enctype="multipart/form-data" class="row g-2 align-items-end mb-3">
+          <div class="col-md-5">
+            <label class="form-label">Tirar foto agora (celular/tablet)</label>
+            <input type="file" name="fotos" accept="image/*" capture="environment" class="form-control" multiple>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Ou anexar arquivo(s) já salvos</label>
+            <input type="file" name="fotos" accept="image/*" class="form-control" multiple>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-upload"></i> Enviar</button>
+          </div>
+        </form>
+
+        {% if ordem.fotos %}
+        <div class="row g-2">
+          {% for foto in ordem.fotos %}
+          <div class="col-6 col-md-3">
+            <div class="position-relative">
+              <a href="{{ url_for('static', filename='uploads/ordens/' ~ ordem.id ~ '/' ~ foto.arquivo) }}" target="_blank">
+                <img src="{{ url_for('static', filename='uploads/ordens/' ~ ordem.id ~ '/' ~ foto.arquivo) }}" class="img-fluid rounded border" style="aspect-ratio: 1; object-fit: cover; width: 100%;">
+              </a>
+              <form method="POST" action="{{ url_for('ordens.excluir_foto', ordem_id=ordem.id, foto_id=foto.id) }}" onsubmit="return confirm('Excluir esta foto?');" class="position-absolute top-0 end-0 m-1">
+                <button class="btn btn-sm btn-danger py-0 px-1"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state py-3 mb-0"><i class="bi bi-camera"></i>Nenhuma foto anexada ainda.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-tools"></i> Peças e Serviços</span>
+        <button class="btn btn-sm btn-outline-success" type="button" data-bs-toggle="collapse" data-bs-target="#formItem"><i class="bi bi-plus-lg"></i> Adicionar</button>
+      </div>
+      <div class="collapse" id="formItem">
+        <div class="card-body border-bottom bg-light">
+          <form method="POST" action="{{ url_for('ordens.adicionar_item', id=ordem.id) }}" class="row g-2 align-items-end">
+            <div class="col-md-2">
+              <label class="form-label">Tipo</label>
+              <select name="tipo" class="form-select">
+                {% for t in tipos_item %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Produto do estoque (opcional)</label>
+              <select name="produto_id" class="form-select" onchange="preencherProduto(this)">
+                <option value="">-- Digitar manualmente --</option>
+                {% for p in produtos %}
+                <option value="{{ p.id }}" data-preco="{{ p.preco_venda }}" data-nome="{{ p.nome }}">{{ p.nome }} ({{ p.quantidade_estoque }} {{ p.unidade }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Descrição</label>
+              <input type="text" name="descricao" id="descricaoItem" class="form-control" placeholder="Ex: Fonte ATX 500W">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Qtd</label>
+              <input type="text" name="quantidade" value="1" class="form-control">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Valor Unit.</label>
+              <input type="text" name="valor_unitario" id="valorUnitItem" class="form-control" placeholder="0,00">
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Adicionar Item</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr><th>Tipo</th><th>Descrição</th><th>Qtd</th><th>Vlr. Unit.</th><th>Total</th><th></th></tr></thead>
+          <tbody>
+            {% for i in ordem.itens %}
+            <tr>
+              <td><span class="badge bg-secondary">{{ i.tipo }}</span></td>
+              <td>{{ i.descricao }}</td>
+              <td>{{ i.quantidade }}</td>
+              <td>{{ i.valor_unitario | moeda }}</td>
+              <td>{{ i.valor_total | moeda }}</td>
+              <td class="text-end">
+                <form method="POST" action="{{ url_for('ordens.remover_item', ordem_id=ordem.id, item_id=i.id) }}" onsubmit="return confirm('Remover este item?');">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="empty-state py-3">Nenhum item lançado ainda.</td></tr>
+            {% endfor %}
+          </tbody>
+          {% if ordem.itens %}
+          <tfoot>
+            <tr><td colspan="4" class="text-end fw-bold">Subtotal itens</td><td class="fw-bold">{{ ordem.valor_itens | moeda }}</td><td></td></tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-clock-history"></i> Histórico da Ordem (atualizações dos técnicos)</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('ordens.atualizar_status', id=ordem.id) }}" class="row g-2 mb-4">
+          <div class="col-md-5">
+            <label class="form-label">Alterar status</label>
+            <select name="status" class="form-select">
+              {% for s in status_lista %}
+              <option value="{{ s }}" {{ 'selected' if ordem.status == s }}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Observação (opcional)</label>
+            <input type="text" name="observacao" class="form-control" placeholder="Ex: Aguardando peça do fornecedor X">
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-arrow-repeat"></i> Atualizar</button>
+          </div>
+        </form>
+
+        <ul class="timeline">
+          {% for h in ordem.historico %}
+          <li>
+            <div class="d-flex justify-content-between">
+              <strong>{{ h.status_novo }}</strong>
+              <span class="text-muted small">{{ h.data | data(true) }}</span>
+            </div>
+            {% if h.observacao %}<div class="small text-muted">{{ h.observacao }}</div>{% endif %}
+            <div class="small text-muted">por {{ h.usuario.nome if h.usuario else 'Sistema' }}</div>
+          </li>
+          {% else %}
+          <li class="text-muted">Nenhum registro de histórico.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coluna lateral: financeiro -->
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-cash-coin"></i> Financeiro da OS</div>
+      <div class="card-body">
+        <table class="table table-sm mb-3">
+          <tr><td>Valor dos itens</td><td class="text-end">{{ ordem.valor_itens | moeda }}</td></tr>
+          <tr><td>Desconto</td><td class="text-end">- {{ ordem.valor_desconto | moeda }}</td></tr>
+          <tr><td>Adiantamento</td><td class="text-end">{{ ordem.valor_adiantamento | moeda }}</td></tr>
+          <tr class="fw-bold border-top"><td>Total</td><td class="text-end">{{ ordem.valor_total | moeda }}</td></tr>
+          <tr class="fw-bold"><td>Já pago</td><td class="text-end text-success">{{ ordem.valor_pago | moeda }}</td></tr>
+          <tr class="fw-bold"><td>Pendente</td><td class="text-end text-danger">{{ ordem.valor_pendente | moeda }}</td></tr>
+        </table>
+
+        <form method="POST" action="{{ url_for('ordens.registrar_pagamento', id=ordem.id) }}">
+          <div class="mb-2">
+            <label class="form-label">Forma de pagamento</label>
+            <select name="forma_pagamento" id="formaPagamentoOS" class="form-select" onchange="toggleVencimentoOS()">
+              {% for f in formas_pagamento %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Valor</label>
+            <input type="text" name="valor" id="valorPagamentoOS" class="form-control" placeholder="0,00" value="{{ '%.2f' % ordem.valor_pendente }}">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Parcelas</label>
+            <input type="number" name="parcelas" class="form-control" value="1" min="1">
+          </div>
+          <div class="mb-2 d-none" id="campoVencimentoOS">
+            <label class="form-label">Vencimento</label>
+            <input type="date" name="data_vencimento" class="form-control">
+          </div>
+
+          <div class="mb-2 d-none text-center border rounded p-2" id="painelPixOS">
+            <p class="small mb-2">Gere o QR Code Pix com o valor acima.</p>
+            <button type="button" class="btn btn-success btn-sm mb-2" onclick="gerarPixOS()"><i class="bi bi-qr-code"></i> Gerar QR Code</button>
+            <div id="qrcodePixOS" class="d-flex justify-content-center"></div>
+          </div>
+          <div class="mb-2 d-none alert alert-info small" id="painelCartaoOS">
+            <i class="bi bi-credit-card-2-front"></i> Passe ou aproxime o cartão na maquininha e confirme o valor lá.
+          </div>
+
+          <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-lg"></i> Registrar Pagamento</button>
+        </form>
+
+        {% if ordem.pagamentos %}
+        <hr>
+        <h6 class="small text-muted text-uppercase">Pagamentos registrados</h6>
+        <ul class="list-group list-group-flush">
+          {% for p in ordem.pagamentos %}
+          <li class="list-group-item px-0 d-flex justify-content-between">
+            <span>{{ p.forma_pagamento }}{% if p.parcelas > 1 %} ({{ p.parcelas }}x){% endif %}</span>
+            <span>{{ p.valor | moeda }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle"></i> Detalhes</div>
+      <div class="card-body small">
+        <p class="mb-1"><strong>Técnico responsável:</strong> {{ ordem.tecnico.nome if ordem.tecnico else '-' }}</p>
+        <p class="mb-1"><strong>Previsão de entrega:</strong> {{ ordem.data_previsao | data if ordem.data_previsao else '-' }}</p>
+        <p class="mb-1"><strong>Conclusão:</strong> {{ ordem.data_conclusao | data(true) if ordem.data_conclusao else '-' }}</p>
+        <p class="mb-1"><strong>Entrega:</strong> {{ ordem.data_entrega | data(true) if ordem.data_entrega else '-' }}</p>
+        <p class="mb-0"><strong>Garantia:</strong> {{ ordem.garantia_dias }} dias</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function preencherProduto(select) {
+  const opt = select.options[select.selectedIndex];
+  if (opt.value) {
+    document.getElementById('descricaoItem').value = opt.dataset.nome;
+    document.getElementById('valorUnitItem').value = opt.dataset.preco;
+  }
+}
+function toggleVencimentoOS() {
+  const forma = document.getElementById('formaPagamentoOS').value;
+  document.getElementById('campoVencimentoOS').classList.toggle('d-none', forma !== 'Venda Futura (Fiado)');
+  document.getElementById('painelPixOS').classList.toggle('d-none', forma !== 'Pix');
+  document.getElementById('painelCartaoOS').classList.toggle('d-none', !forma.startsWith('Cartão'));
+}
+function gerarPixOS() {
+  const valor = parseFloat((document.getElementById('valorPagamentoOS').value || '0').replace(',', '.'));
+  gerarQrCodePix({
+    chave: "{{ config.EMPRESA_PIX_CHAVE }}",
+    nomeRecebedor: "{{ config.EMPRESA_PIX_NOME or config.EMPRESA_NOME }}",
+    cidade: "{{ config.EMPRESA_PIX_CIDADE }}",
+    valor: valor,
+    identificador: "{{ ordem.numero }}",
+    elementoId: "qrcodePixOS",
+  });
+}
+</script>
+{% endblock %}

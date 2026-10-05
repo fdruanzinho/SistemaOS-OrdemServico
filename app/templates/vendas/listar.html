@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_venda_badge %}
+{% block title %}Vendas{% endblock %}
+{% block page_title %}Vendas{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('vendas.nova') }}" class="btn btn-primary btn-sm"><i class="bi bi-cart-plus"></i> Nova Venda</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Nº</th><th>Cliente</th><th>Data</th><th>Vendedor</th><th>Status</th><th>Total</th><th></th></tr></thead>
+      <tbody>
+        {% for v in vendas %}
+        <tr>
+          <td><strong>{{ v.numero }}</strong></td>
+          <td>{{ v.cliente.nome_exibicao if v.cliente else 'Consumidor não identificado' }}</td>
+          <td>{{ v.data_venda | data(true) }}</td>
+          <td>{{ v.vendedor.nome if v.vendedor else '-' }}</td>
+          <td>{{ status_venda_badge(v.status) }}</td>
+          <td>{{ v.valor_total | moeda }}</td>
+          <td class="text-end"><a href="{{ url_for('vendas.detalhe', id=v.id) }}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-state"><i class="bi bi-cart-x"></i>Nenhuma venda registrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

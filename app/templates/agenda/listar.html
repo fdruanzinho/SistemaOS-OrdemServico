@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Agenda{% endblock %}
+{% block page_title %}Agenda de Compromissos{% endblock %}
+
+{% block extra_head %}
+<style>
+.mini-cal { width: 100%; border-collapse: collapse; }
+.mini-cal th { font-size: .68rem; text-transform: uppercase; color: var(--texto-suave); padding: .2rem; text-align: center; }
+.mini-cal td { text-align: center; padding: 0; }
+.mini-cal a {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; margin: 1px auto; border-radius: 50%;
+  text-decoration: none; color: var(--texto); font-size: .82rem; position: relative;
+}
+.mini-cal a:hover { background: var(--cinza-fundo); }
+.mini-cal .fora-mes a { color: #cbd5e1; }
+.mini-cal .hoje a { border: 1px solid var(--azul); font-weight: 700; }
+.mini-cal .selecionado a { background: var(--azul); color: #fff; }
+.mini-cal .tem-compromisso a::after {
+  content: ""; position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--aviso);
+}
+.mini-cal .selecionado.tem-compromisso a::after { background: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-3">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <a href="{{ url_for('agenda.listar', dia=mes_anterior.isoformat()) }}" class="text-decoration-none"><i class="bi bi-chevron-left"></i></a>
+        <strong>{{ mes_nome }} {{ ano_mes }}</strong>
+        <a href="{{ url_for('agenda.listar', dia=mes_seguinte.isoformat()) }}" class="text-decoration-none"><i class="bi bi-chevron-right"></i></a>
+      </div>
+      <div class="card-body p-2">
+        <table class="mini-cal">
+          <thead><tr><th>S</th><th>T</th><th>Q</th><th>Q</th><th>S</th><th>S</th><th>D</th></tr></thead>
+          <tbody>
+            {% for semana in semanas_mes %}
+            <tr>
+              {% for dia in semana %}
+              <td class="
+                {{ 'fora-mes' if dia.month != dia_selecionado.month }}
+                {{ 'hoje' if dia == hoje }}
+                {{ 'selecionado' if dia == dia_selecionado }}
+                {{ 'tem-compromisso' if contagem_mes.get(dia) }}
+              ">
+                <a href="{{ url_for('agenda.listar', dia=dia.isoformat()) }}" title="{{ contagem_mes.get(dia, 0) }} compromisso(s)">{{ dia.day }}</a>
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <a href="{{ url_for('agenda.listar') }}" class="btn btn-outline-primary btn-sm w-100 mb-3"><i class="bi bi-calendar-check"></i> Ir para hoje</a>
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-calendar-plus"></i> Agendar compromisso</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('agenda.novo') }}">
+          <div class="mb-2">
+            <label class="form-label">Descrição</label>
+            <textarea name="descricao" class="form-control" rows="2" required placeholder="Ex: Ligar para o cliente sobre o orçamento"></textarea>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-7">
+              <label class="form-label">Dia</label>
+              <input type="date" name="dia" class="form-control" value="{{ dia_selecionado.isoformat() }}" required>
+            </div>
+            <div class="col-5">
+              <label class="form-label">Hora</label>
+              <input type="time" name="hora" class="form-control" value="00:00">
+            </div>
+          </div>
+          <div class="form-check mb-2">
+            <input type="checkbox" name="avisar" class="form-check-input" id="avisarCheck">
+            <label class="form-check-label" for="avisarCheck">Avisar</label>
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Agendar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-9">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <a href="{{ url_for('agenda.listar', dia=semana_anterior.isoformat()) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i> Semana anterior</a>
+      <span class="text-muted small">Semana de {{ dias_semana[0].strftime('%d/%m') }} a {{ dias_semana[-1].strftime('%d/%m') }}</span>
+      <a href="{{ url_for('agenda.listar', dia=semana_seguinte.isoformat()) }}" class="btn btn-outline-secondary btn-sm">Próxima semana <i class="bi bi-chevron-right"></i></a>
+    </div>
+
+    <div class="row g-3">
+      {% for dia in dias_semana %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 {{ 'border-primary' if dia == hoje }} {{ 'shadow-sm border-2' if dia == dia_selecionado }}">
+          <div class="card-header {{ 'bg-primary text-white' if dia == hoje else '' }}">
+            {{ dia.strftime('%A') }} <span class="float-end">{{ dia.strftime('%d/%m') }}</span>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for c in por_dia.get(dia, []) %}
+            <li class="list-group-item d-flex justify-content-between align-items-start {{ 'text-decoration-line-through text-muted' if c.concluido }}">
+              <div>
+                <span class="fw-semibold">{{ c.hora }}</span> — {{ c.descricao }}
+                {% if c.avisar %}<i class="bi bi-bell text-warning"></i>{% endif %}
+              </div>
+              <div class="text-nowrap">
+                <form method="POST" action="{{ url_for('agenda.concluir', id=c.id) }}" class="d-inline">
+                  <button class="btn btn-sm btn-outline-success py-0 px-1"><i class="bi bi-check-lg"></i></button>
+                </form>
+                <form method="POST" action="{{ url_for('agenda.excluir', id=c.id) }}" class="d-inline" onsubmit="return confirm('Excluir este compromisso?');">
+                  <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </li>
+            {% else %}
+            <li class="list-group-item text-muted small py-2">Nenhum compromisso.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

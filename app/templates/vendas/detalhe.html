@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_venda_badge %}
+{% block title %}Venda {{ venda.numero }}{% endblock %}
+{% block page_title %}Venda {{ venda.numero }}{% endblock %}
+{% block topbar_actions %}
+{% if venda.status != 'Cancelada' %}
+<form method="POST" action="{{ url_for('vendas.cancelar', id=venda.id) }}" onsubmit="return confirm('Cancelar esta venda? O estoque será estornado.');" class="d-inline">
+  <button class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle"></i> Cancelar Venda</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header">Itens</div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr><th>Produto</th><th>Qtd</th><th>Vlr Unit.</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for i in venda.itens %}
+            <tr><td>{{ i.nome_exibicao }}</td><td>{{ i.quantidade }}</td><td>{{ i.valor_unitario | moeda }}</td><td>{{ i.valor_total | moeda }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Resumo</div>
+      <div class="card-body">
+        <p><strong>Status:</strong> {{ status_venda_badge(venda.status) }}</p>
+        <p><strong>Cliente:</strong> {{ venda.cliente.nome_exibicao if venda.cliente else 'Consumidor não identificado' }}</p>
+        <p><strong>Vendedor:</strong> {{ venda.vendedor.nome if venda.vendedor else '-' }}</p>
+        <p><strong>Data:</strong> {{ venda.data_venda | data(true) }}</p>
+        <hr>
+        <p>Subtotal: {{ venda.valor_itens | moeda }}</p>
+        <p>Desconto: {{ venda.valor_desconto | moeda }}</p>
+        <p class="fs-5"><strong>Total: {{ venda.valor_total | moeda }}</strong></p>
+        {% if venda.pagamentos %}
+        <hr>
+        {% for p in venda.pagamentos %}
+        <p class="mb-1">{{ p.forma_pagamento }} — {{ p.valor | moeda }} <span class="badge {{ 'bg-success' if p.status == 'Pago' else 'bg-warning text-dark' }}">{{ p.status }}</span></p>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

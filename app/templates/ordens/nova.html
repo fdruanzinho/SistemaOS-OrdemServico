@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Nova Ordem de Serviço{% endblock %}
+{% block page_title %}Abrir Nova Ordem de Serviço{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-body">
+
+    {% if not cliente %}
+    <div class="form-section-title">Passo 1 — Selecione o Cliente</div>
+    <div class="row g-3 align-items-end mb-2">
+      <div class="col-md-8">
+        <label class="form-label">Cliente já cadastrado</label>
+        <select id="selectCliente" class="form-select">
+          <option value="">Selecione...</option>
+          {% for c in clientes %}
+          <option value="{{ c.id }}">{{ c.nome_exibicao }} — {{ c.cpf_cnpj }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button type="button" class="btn btn-outline-primary w-100" onclick="irParaCliente()">
+          <i class="bi bi-arrow-right"></i> Continuar
+        </button>
+      </div>
+    </div>
+    <div class="text-center my-3 text-muted">ou</div>
+    <a href="{{ url_for('clientes.novo') }}?continuar_os=1" class="btn btn-success">
+      <i class="bi bi-person-plus"></i> Cliente Novo — Cadastrar Agora
+    </a>
+
+    {% else %}
+
+    <div class="alert alert-light border d-flex justify-content-between align-items-center">
+      <div><i class="bi bi-person-check"></i> Cliente: <strong>{{ cliente.nome_exibicao }}</strong> — {{ cliente.cpf_cnpj }} — {{ cliente.telefone }}</div>
+      <a href="{{ url_for('ordens.nova') }}" class="btn btn-sm btn-outline-secondary">Trocar cliente</a>
+    </div>
+
+    <form method="POST">
+      <input type="hidden" name="cliente_id" value="{{ cliente.id }}">
+
+      <div class="form-section-title">Dados do Equipamento</div>
+      <div class="row g-3 mb-2">
+        <div class="col-md-4">
+          <label class="form-label">O que é o item</label>
+          <select name="tipo" class="form-select" required>
+            {% for t in tipos_equipamento %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Marca</label>
+          <input type="text" name="marca" class="form-control" placeholder="Ex: Dell, HP, Kingston...">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Modelo</label>
+          <input type="text" name="modelo" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Número de Série</label>
+          <input type="text" name="numero_serie" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Cor</label>
+          <input type="text" name="cor" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Senha de acesso do equipamento</label>
+          <input type="text" name="senha_acesso" class="form-control" placeholder="Se informada pelo cliente">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Acessórios que acompanham</label>
+          <input type="text" name="acessorios" class="form-control" placeholder="Ex: carregador, mouse, cabo de força...">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Condição de entrada (avarias/estado físico)</label>
+          <input type="text" name="condicao_entrada" class="form-control" placeholder="Ex: riscos na tampa, tela trincada...">
+        </div>
+      </div>
+
+      <div class="form-section-title">Abertura da Ordem de Serviço</div>
+      <div class="row g-3 mb-2">
+        <div class="col-12">
+          <label class="form-label">Defeito relatado pelo cliente</label>
+          <textarea name="defeito_relatado" class="form-control" rows="3" required placeholder="Descreva o problema relatado..."></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Observações internas</label>
+          <textarea name="observacoes" class="form-control" rows="2" placeholder="Observações da equipe técnica (não visível ao cliente)"></textarea>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Previsão de entrega</label>
+          <input type="date" name="data_previsao" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Garantia (dias)</label>
+          <input type="number" name="garantia_dias" class="form-control" value="90">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Valor orçado (estimado)</label>
+          <input type="text" name="valor_orcamento" class="form-control" placeholder="0,00">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Adiantamento recebido</label>
+          <input type="text" name="valor_adiantamento" class="form-control" placeholder="0,00">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Abrir Ordem de Serviço</button>
+      <a href="{{ url_for('ordens.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function irParaCliente() {
+  const id = document.getElementById('selectCliente').value;
+  if (!id) { alert('Selecione um cliente.'); return; }
+  window.location.href = "{{ url_for('ordens.nova') }}?cliente_id=" + id;
+}
+</script>
+{% endblock %}

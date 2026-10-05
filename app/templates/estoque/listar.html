@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Estoque{% endblock %}
+{% block page_title %}Estoque{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('estoque.novo') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Novo Produto</a>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2 align-items-center">
+      <div class="col-md-6"><input type="text" name="q" value="{{ busca }}" class="form-control" placeholder="Buscar por nome, código ou categoria..."></div>
+      <div class="col-auto">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="baixo" value="1" id="baixo" {{ 'checked' if apenas_baixo }} onchange="this.form.submit()">
+          <label class="form-check-label" for="baixo">Somente estoque baixo</label>
+        </div>
+      </div>
+      <div class="col-auto"><button class="btn btn-outline-primary"><i class="bi bi-search"></i> Buscar</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Estoque</th><th>Preço Custo</th><th>Preço Venda</th><th></th></tr></thead>
+      <tbody>
+        {% for p in produtos %}
+        <tr class="{{ 'table-warning' if p.estoque_baixo }}">
+          <td>{{ p.codigo or '-' }}</td>
+          <td>{{ p.nome }}</td>
+          <td>{{ p.categoria or '-' }}</td>
+          <td>{{ p.quantidade_estoque }} {{ p.unidade }} {% if p.estoque_baixo %}<i class="bi bi-exclamation-triangle text-warning" title="Estoque baixo"></i>{% endif %}</td>
+          <td>{{ p.preco_custo | moeda }}</td>
+          <td>{{ p.preco_venda | moeda }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('estoque.movimentos', id=p.id) }}" class="btn btn-sm btn-outline-secondary" title="Movimentações"><i class="bi bi-arrow-left-right"></i></a>
+            <a href="{{ url_for('estoque.editar', id=p.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-state"><i class="bi bi-box"></i>Nenhum produto cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

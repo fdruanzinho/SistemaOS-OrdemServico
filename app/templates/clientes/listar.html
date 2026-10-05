@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Clientes{% endblock %}
+{% block page_title %}Clientes{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('clientes.novo') }}" class="btn btn-primary btn-sm"><i class="bi bi-person-plus"></i> Novo Cliente</a>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2">
+      <div class="col">
+        <input type="text" name="q" value="{{ busca }}" class="form-control" placeholder="Buscar por nome, CPF/CNPJ, telefone ou e-mail...">
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-outline-primary"><i class="bi bi-search"></i> Buscar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade/UF</th><th>Cadastro</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for c in clientes %}
+        <tr>
+          <td>
+            <a href="{{ url_for('clientes.detalhe', id=c.id) }}" class="fw-semibold text-decoration-none">{{ c.nome_exibicao }}</a>
+            <div class="small text-muted">{{ c.tipo_pessoa }}</div>
+          </td>
+          <td>{{ c.cpf_cnpj }}</td>
+          <td>{{ c.telefone }}</td>
+          <td>{{ c.cidade or '-' }}{% if c.estado %}/{{ c.estado }}{% endif %}</td>
+          <td>{{ c.data_cadastro | data }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('ordens.nova', cliente_id=c.id) }}" class="btn btn-sm btn-outline-success" title="Abrir OS"><i class="bi bi-clipboard2-plus"></i></a>
+            <a href="{{ url_for('clientes.detalhe', id=c.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty-state"><i class="bi bi-people"></i>Nenhum cliente encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

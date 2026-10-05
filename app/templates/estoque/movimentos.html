@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Movimentações - {{ produto.nome }}{% endblock %}
+{% block page_title %}Movimentações — {{ produto.nome }}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-sliders"></i> Ajuste Manual</div>
+      <div class="card-body">
+        <p>Estoque atual: <strong>{{ produto.quantidade_estoque }} {{ produto.unidade }}</strong></p>
+        <form method="POST" action="{{ url_for('estoque.ajuste_manual', id=produto.id) }}">
+          <div class="mb-2">
+            <label class="form-label">Tipo</label>
+            <select name="tipo" class="form-select">
+              <option value="Entrada">Entrada</option>
+              <option value="Saída">Saída</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Quantidade</label>
+            <input type="text" name="quantidade" class="form-control" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Motivo</label>
+            <input type="text" name="motivo" class="form-control" placeholder="Ex: Inventário, avaria, devolução...">
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Registrar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clock-history"></i> Histórico</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Data</th><th>Tipo</th><th>Quantidade</th><th>Origem</th></tr></thead>
+          <tbody>
+            {% for m in movimentos %}
+            <tr>
+              <td>{{ m.data | data(true) }}</td>
+              <td><span class="badge {{ 'bg-success' if m.tipo == 'Entrada' else 'bg-danger' }}">{{ m.tipo }}</span></td>
+              <td>{{ m.quantidade }}</td>
+              <td>{{ m.origem or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="empty-state">Nenhuma movimentação registrada.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Nova Conta a Pagar{% endblock %}
+{% block page_title %}Novo Lançamento — Contas a Pagar{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 650px;">
+  <div class="card-body">
+    <form method="POST">
+      <div class="mb-3">
+        <label class="form-label">Descrição</label>
+        <input type="text" name="descricao" class="form-control" required placeholder="Ex: Aluguel, energia, salário...">
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Fornecedor (opcional)</label>
+          <input type="text" name="fornecedor_nome" class="form-control" placeholder="Nome do fornecedor">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Categoria</label>
+          <input type="text" name="categoria" class="form-control" placeholder="Ex: Fornecedor, Aluguel, Energia, Salário...">
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Nº do documento</label>
+          <input type="text" name="numero_documento" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Valor</label>
+          <input type="text" name="valor" class="form-control" required placeholder="0,00">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Vencimento</label>
+          <input type="date" name="data_vencimento" class="form-control" required>
+        </div>
+      </div>
+      <div class="mb-3 mt-3">
+        <label class="form-label">Observações</label>
+        <textarea name="observacoes" class="form-control" rows="2"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Lançar</button>
+      <a href="{{ url_for('financeiro.pagar') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
