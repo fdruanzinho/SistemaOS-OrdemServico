@@ -5,6 +5,15 @@
 {% block topbar_actions %}
 <a href="{{ url_for('ordens.nova', cliente_id=cliente.id) }}" class="btn btn-success btn-sm"><i class="bi bi-clipboard2-plus"></i> Nova OS</a>
 <a href="{{ url_for('clientes.editar', id=cliente.id) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Editar</a>
+{% if vinculos.ordens or vinculos.vendas or vinculos.contas %}
+<form method="POST" action="{{ url_for('clientes.inativar', id=cliente.id) }}" class="d-inline" onsubmit="return confirm('Inativar este cliente? Ele some da lista, mas o histórico é mantido.');">
+  <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-eye-slash"></i> Inativar</button>
+</form>
+{% endif %}
+<form method="POST" action="{{ url_for('clientes.excluir', id=cliente.id) }}" class="d-inline"
+      onsubmit="return confirm('{% if vinculos.ordens or vinculos.vendas or vinculos.contas %}ATENÇÃO: este cliente tem {{ vinculos.ordens }} OS, {{ vinculos.vendas }} venda(s) e {{ vinculos.contas }} conta(s). Excluir apaga as OS dele de forma definitiva. Continuar?{% else %}Excluir este cliente? Essa ação não pode ser desfeita.{% endif %}');">
+  <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Excluir</button>
+</form>
 {% endblock %}
 
 {% block content %}
@@ -16,7 +25,9 @@
         <p class="mb-1"><strong>{{ 'CNPJ' if cliente.tipo_pessoa == 'Pessoa Jurídica' else 'CPF' }}:</strong> {{ cliente.cpf_cnpj }}</p>
         {% if cliente.nome_fantasia %}<p class="mb-1"><strong>Nome Fantasia:</strong> {{ cliente.nome_fantasia }}</p>{% endif %}
         {% if cliente.contato %}<p class="mb-1"><strong>Contato:</strong> {{ cliente.contato }}</p>{% endif %}
+        {% if cliente.rg_ie %}<p class="mb-1"><strong>{{ 'Inscrição Estadual' if cliente.tipo_pessoa == 'Pessoa Jurídica' else 'RG' }}:</strong> {{ cliente.rg_ie }}</p>{% endif %}
         <p class="mb-1"><strong>Telefone:</strong> {{ cliente.telefone }}{% if cliente.telefone2 %} / {{ cliente.telefone2 }}{% endif %}</p>
+        {% if cliente.celular_whatsapp %}<p class="mb-1"><strong>WhatsApp:</strong> {{ cliente.celular_whatsapp }}</p>{% endif %}
         <p class="mb-1"><strong>E-mail:</strong> {{ cliente.email or '-' }}</p>
         <p class="mb-1"><strong>Endereço:</strong> {{ cliente.endereco_completo or '-' }}</p>
         {% if cliente.observacoes %}<p class="mb-0"><strong>Observações:</strong> {{ cliente.observacoes }}</p>{% endif %}

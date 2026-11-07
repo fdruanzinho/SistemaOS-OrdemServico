@@ -186,3 +186,13 @@ SistemaOS/
 - Sugestões de próximos passos, se fizerem sentido para o seu negócio: tela de
   "alterar minha senha", relatório/exportação de vendas e OS em PDF/Excel,
   gráficos financeiros no dashboard, backup automático do banco de dados.
+
+## Atualização (correções)
+
+- **CPF/CNPJ** validados pelos dígitos verificadores (não aceita número a mais) e gravados formatados.
+- Campos em branco não aparecem mais como "None"; removidos os campos Site e Rádio do cadastro.
+- **CEP automático** (consulta ViaCEP) e máscaras de telefone.
+- **Excluir cliente** (sem histórico: exclui; com histórico: só o administrador, ou use *Inativar*).
+- Toda venda ou OS paga entra em **Contas a Receber** (Pago); venda futura entra como Pendente.
+- **Dar baixa** em vendas, OS, contas a receber e contas a pagar (forma e data), com **estornar**, editar, cancelar e parcelamento.
+- Ao iniciar, o sistema corrige dados antigos (textos "None" e vendas pagas que não apareciam no financeiro). Não precisa apagar o banco.

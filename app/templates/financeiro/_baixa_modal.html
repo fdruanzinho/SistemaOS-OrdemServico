@@ -1,0 +1,42 @@
+{# Janela única de "Dar baixa" reaproveitada por Contas a Receber e Contas a Pagar #}
+<div class="modal fade" id="modalBaixa" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" id="formBaixa" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-check2-circle text-success"></i> {{ titulo_baixa }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-1 fw-semibold" id="baixaDescricao"></p>
+        <p class="fs-4 fw-bold text-success" id="baixaValor"></p>
+        <div class="mb-3">
+          <label class="form-label">Forma de pagamento</label>
+          <select name="forma_pagamento" class="form-select">
+            {% for f in formas_baixa %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Data do pagamento</label>
+          <input type="date" name="data_pagamento" class="form-control" value="{{ hoje }}">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button>
+        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Confirmar baixa</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+document.querySelectorAll('[data-baixa]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('formBaixa').action = btn.dataset.action;
+    document.getElementById('baixaDescricao').textContent = btn.dataset.descricao;
+    document.getElementById('baixaValor').textContent = btn.dataset.valor;
+    const forma = btn.dataset.forma;
+    const sel = document.querySelector('#formBaixa select[name=forma_pagamento]');
+    if (forma) { for (const o of sel.options) if (o.value === forma) sel.value = forma; }
+    new bootstrap.Modal(document.getElementById('modalBaixa')).show();
+  });
+});
+</script>

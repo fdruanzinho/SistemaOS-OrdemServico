@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Nova Conta a Pagar{% endblock %}
-{% block page_title %}Novo Lançamento — Contas a Pagar{% endblock %}
+{% block title %}{{ 'Editar' if conta else 'Nova' }} conta a pagar{% endblock %}
+{% block page_title %}{{ 'Editar lançamento' if conta else 'Novo lançamento' }} — Contas a Pagar{% endblock %}
 
 {% block content %}
 <div class="card" style="max-width: 650px;">
@@ -8,37 +8,43 @@
     <form method="POST">
       <div class="mb-3">
         <label class="form-label">Descrição</label>
-        <input type="text" name="descricao" class="form-control" required placeholder="Ex: Aluguel, energia, salário...">
+        <input type="text" name="descricao" class="form-control" required placeholder="Ex: Aluguel, energia, salário..." value="{{ conta.descricao if conta else '' }}">
       </div>
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label class="form-label">Fornecedor (opcional)</label>
-          <input type="text" name="fornecedor_nome" class="form-control" placeholder="Nome do fornecedor">
+          <input type="text" name="fornecedor_nome" class="form-control" placeholder="Nome do fornecedor" value="{{ conta.fornecedor_nome if conta else '' }}">
         </div>
         <div class="col-md-6">
           <label class="form-label">Categoria</label>
-          <input type="text" name="categoria" class="form-control" placeholder="Ex: Fornecedor, Aluguel, Energia, Salário...">
+          <input type="text" name="categoria" class="form-control" placeholder="Ex: Fornecedor, Aluguel, Energia, Salário..." value="{{ conta.categoria if conta else '' }}">
         </div>
       </div>
       <div class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label">Nº do documento</label>
-          <input type="text" name="numero_documento" class="form-control">
+          <input type="text" name="numero_documento" class="form-control" value="{{ conta.numero_documento if conta else '' }}">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label">Valor</label>
-          <input type="text" name="valor" class="form-control" required placeholder="0,00">
+          <input type="text" name="valor" class="form-control" required placeholder="0,00" value="{{ ('%.2f' % conta.valor) | replace('.', ',') if conta else '' }}">
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Vencimento</label>
-          <input type="date" name="data_vencimento" class="form-control" required>
+        <div class="col-md-3">
+          <label class="form-label">{{ 'Vencimento' if conta else '1º vencimento' }}</label>
+          <input type="date" name="data_vencimento" class="form-control" required value="{{ conta.data_vencimento.isoformat() if conta else '' }}">
         </div>
+        {% if not conta %}
+        <div class="col-md-3">
+          <label class="form-label">Parcelas</label>
+          <input type="number" name="parcelas" class="form-control" value="1" min="1" max="60">
+        </div>
+        {% endif %}
       </div>
       <div class="mb-3 mt-3">
         <label class="form-label">Observações</label>
-        <textarea name="observacoes" class="form-control" rows="2"></textarea>
+        <textarea name="observacoes" class="form-control" rows="2">{{ conta.observacoes if conta else '' }}</textarea>
       </div>
-      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Lançar</button>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> {{ 'Salvar' if conta else 'Lançar' }}</button>
       <a href="{{ url_for('financeiro.pagar') }}" class="btn btn-outline-secondary">Cancelar</a>
     </form>
   </div>

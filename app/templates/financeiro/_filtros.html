@@ -1,0 +1,29 @@
+{# Filtros e atalhos (usa: filtros, opcoes_status, endpoint) #}
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <div class="d-flex flex-wrap gap-2 mb-2">
+      {% for valor, rotulo in [('', 'Todos'), ('aberto', 'Em aberto'), ('Atrasado', 'Atrasados'), ('Pago', 'Pagos'), ('Cancelado', 'Cancelados')] %}
+      <a href="{{ url_for(endpoint, status=valor, q=filtros.q, de=filtros.de, ate=filtros.ate) }}"
+         class="btn btn-sm {{ 'btn-primary' if filtros.status == valor else 'btn-outline-primary' }}">{{ rotulo }}</a>
+      {% endfor %}
+    </div>
+    <form method="GET" class="row g-2 align-items-end">
+      <input type="hidden" name="status" value="{{ filtros.status }}">
+      <div class="col-md-5">
+        <input type="text" name="q" value="{{ filtros.q }}" class="form-control form-control-sm" placeholder="Buscar por descrição, cliente/fornecedor, origem...">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="small text-muted">Vencimento de</label>
+        <input type="date" name="de" value="{{ filtros.de }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="small text-muted">até</label>
+        <input type="date" name="ate" value="{{ filtros.ate }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-sm btn-outline-primary"><i class="bi bi-funnel"></i> Filtrar</button>
+        <a href="{{ url_for(endpoint) }}" class="btn btn-sm btn-outline-secondary">Limpar</a>
+      </div>
+    </form>
+  </div>
+</div>

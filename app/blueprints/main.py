@@ -9,6 +9,25 @@ from ..models import (
 
 bp = Blueprint("main", __name__)
 
+_manutencao_feita = False
+
+
+@bp.record_once
+def _configurar(state):
+    # Campo vazio (None) nunca aparece escrito "None" nas telas
+    state.app.jinja_env.finalize = lambda valor: "" if valor is None else valor
+
+
+@bp.before_app_request
+def _manutencao_inicial():
+    """Na primeira requisição após iniciar: limpa dados antigos e corrige o financeiro."""
+    global _manutencao_feita
+    if _manutencao_feita:
+        return
+    _manutencao_feita = True
+    from ..servicos import manutencao_dados
+    manutencao_dados()
+
 
 @bp.route("/")
 @login_required
@@ -27,10 +46,10 @@ def dashboard():
     produtos_estoque_baixo = [p for p in Produto.query.filter_by(ativo=True).all() if p.estoque_baixo]
 
     contas_receber_pendentes = ContaReceber.query.filter(
-        ContaReceber.status == "Pendente"
+        ContaReceber.status.in_(["Pendente", "Atrasado"])
     ).all()
     contas_pagar_pendentes = ContaPagar.query.filter(
-        ContaPagar.status == "Pendente"
+        ContaPagar.status.in_(["Pendente", "Atrasado"])
     ).all()
 
     contas_receber_vencendo = [

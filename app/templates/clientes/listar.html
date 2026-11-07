@@ -39,6 +39,11 @@
           <td class="text-end">
             <a href="{{ url_for('ordens.nova', cliente_id=c.id) }}" class="btn btn-sm btn-outline-success" title="Abrir OS"><i class="bi bi-clipboard2-plus"></i></a>
             <a href="{{ url_for('clientes.detalhe', id=c.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+            <a href="{{ url_for('clientes.editar', id=c.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+            <form method="POST" action="{{ url_for('clientes.excluir', id=c.id) }}" class="d-inline"
+                  onsubmit="return confirm('Excluir o cliente {{ c.nome_exibicao | replace("'", "") }}? Essa ação não pode ser desfeita.');">
+              <button class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></button>
+            </form>
           </td>
         </tr>
         {% else %}

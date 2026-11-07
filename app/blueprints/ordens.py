@@ -13,6 +13,7 @@ from ..models import (
     TIPOS_EQUIPAMENTO, STATUS_OS, STATUS_OS_FINALIZADOS, TIPOS_ITEM_OS, FORMAS_PAGAMENTO,
 )
 from ..utils import gerar_numero, parse_float, parse_data
+from ..servicos import lancar_conta_receber, dar_baixa_origem, FIADO
 
 bp = Blueprint("ordens", __name__, url_prefix="/ordens")
 
@@ -130,6 +131,8 @@ def detalhe(id):
         "ordens/detalhe.html", ordem=ordem,
         status_lista=STATUS_OS, tipos_item=TIPOS_ITEM_OS,
         formas_pagamento=FORMAS_PAGAMENTO,
+        formas_baixa=[f for f in FORMAS_PAGAMENTO if f != FIADO],
+        now_data=datetime.now().strftime("%Y-%m-%d"),
         produtos=Produto.query.filter_by(ativo=True).order_by(Produto.nome).all(),
     )
 
@@ -282,17 +285,17 @@ def registrar_pagamento(id):
     valor = parse_float(request.form.get("valor"))
     parcelas = int(request.form.get("parcelas") or 1)
 
-    if forma == "Venda Futura (Fiado)":
-        conta = ContaReceber(
-            descricao=f"OS {ordem.numero} - {ordem.cliente.nome_exibicao}",
-            cliente_id=ordem.cliente_id,
-            origem="Ordem de Serviço",
-            origem_id=ordem.id,
-            valor=valor,
-            data_vencimento=parse_data(request.form.get("data_vencimento")) or datetime.now().date(),
-            forma_pagamento=forma,
+    if not forma or valor <= 0:
+        flash("Informe a forma de pagamento e um valor maior que zero.", "danger")
+        return redirect(url_for("ordens.detalhe", id=ordem.id))
+
+    descricao = f"OS {ordem.numero} - {ordem.cliente.nome_exibicao}"
+    if forma == FIADO:
+        lancar_conta_receber(
+            descricao, ordem.cliente_id, "Ordem de Serviço", ordem.id, valor, forma,
+            status="Pendente",
+            vencimento=parse_data(request.form.get("data_vencimento")) or datetime.now().date(),
         )
-        db.session.add(conta)
         pagamento = Pagamento(
             ordem_id=ordem.id, forma_pagamento=forma, valor=valor,
             parcelas=parcelas, status="Pendente",
@@ -302,10 +305,31 @@ def registrar_pagamento(id):
             ordem_id=ordem.id, forma_pagamento=forma, valor=valor,
             parcelas=parcelas, status="Pago",
         )
+        # Pagamento à vista também aparece em Contas a Receber (já como "Pago")
+        lancar_conta_receber(
+            descricao, ordem.cliente_id, "Ordem de Serviço", ordem.id, valor, forma,
+            status="Pago",
+        )
 
     db.session.add(pagamento)
     db.session.commit()
     flash("Pagamento registrado!", "success")
+    return redirect(url_for("ordens.detalhe", id=ordem.id))
+
+
+@bp.route("/<int:id>/baixa", methods=["POST"])
+@login_required
+def dar_baixa(id):
+    ordem = OrdemServico.query.get_or_404(id)
+    forma = request.form.get("forma_pagamento") or "Dinheiro"
+    data_pg = parse_data(request.form.get("data_pagamento"))
+    data_pg = datetime.combine(data_pg, datetime.now().time()) if data_pg else None
+    qtd = dar_baixa_origem("Ordem de Serviço", ordem.id, forma, data_pg)
+    db.session.commit()
+    if qtd:
+        flash("Baixa realizada! O valor foi registrado como recebido em Contas a Receber.", "success")
+    else:
+        flash("Esta OS não tem valores pendentes de baixa.", "info")
     return redirect(url_for("ordens.detalhe", id=ordem.id))
 
 

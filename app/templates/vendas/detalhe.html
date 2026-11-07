@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import status_venda_badge %}
+{% from "_macros.html" import status_venda_badge, status_financeiro_badge %}
 {% block title %}Venda {{ venda.numero }}{% endblock %}
 {% block page_title %}Venda {{ venda.numero }}{% endblock %}
 {% block topbar_actions %}
@@ -26,6 +26,50 @@
         </table>
       </div>
     </div>
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-cash-coin"></i> Recebimento (Contas a Receber)</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Vencimento</th><th>Forma</th><th>Valor</th><th>Situação</th><th>Pago em</th></tr></thead>
+          <tbody>
+            {% for c in contas %}
+            <tr>
+              <td>{{ c.data_vencimento | data }}</td>
+              <td>{{ c.forma_pagamento }}</td>
+              <td>{{ c.valor | moeda }}</td>
+              <td>{{ status_financeiro_badge(c.status) }}</td>
+              <td>{{ c.data_pagamento | data(true) if c.data_pagamento else '-' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-muted text-center py-3">Nenhum lançamento financeiro para esta venda.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if venda.status != 'Cancelada' and valor_pendente > 0 %}
+    <div class="card border-success mb-3">
+      <div class="card-header bg-success text-white"><i class="bi bi-check2-circle"></i> Dar baixa — valor pendente: {{ valor_pendente | moeda }}</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('vendas.dar_baixa', id=venda.id) }}" class="row g-2 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label">Como o cliente pagou?</label>
+            <select name="forma_pagamento" class="form-select">
+              {% for f in formas_baixa %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Data do pagamento</label>
+            <input type="date" name="data_pagamento" class="form-control" value="{{ now_data }}">
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-success w-100" onclick="return confirm('Confirmar o recebimento de {{ valor_pendente | moeda }}?');"><i class="bi bi-check-lg"></i> Dar baixa</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
   </div>
   <div class="col-lg-4">
     <div class="card">
@@ -42,7 +86,7 @@
         {% if venda.pagamentos %}
         <hr>
         {% for p in venda.pagamentos %}
-        <p class="mb-1">{{ p.forma_pagamento }} — {{ p.valor | moeda }} <span class="badge {{ 'bg-success' if p.status == 'Pago' else 'bg-warning text-dark' }}">{{ p.status }}</span></p>
+        <p class="mb-1">{{ p.forma_pagamento }} — {{ p.valor | moeda }} <span class="badge {{ 'bg-success' if p.status == 'Pago' else ('bg-secondary' if p.status == 'Cancelado' else 'bg-warning text-dark') }}">{{ p.status }}</span></p>
         {% endfor %}
         {% endif %}
       </div>

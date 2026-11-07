@@ -250,12 +250,24 @@
         <h6 class="small text-muted text-uppercase">Pagamentos registrados</h6>
         <ul class="list-group list-group-flush">
           {% for p in ordem.pagamentos %}
-          <li class="list-group-item px-0 d-flex justify-content-between">
-            <span>{{ p.forma_pagamento }}{% if p.parcelas > 1 %} ({{ p.parcelas }}x){% endif %}</span>
+          <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+            <span>{{ p.forma_pagamento }}{% if p.parcelas and p.parcelas > 1 %} ({{ p.parcelas }}x){% endif %}
+              <span class="badge {{ 'bg-success' if p.status == 'Pago' else ('bg-secondary' if p.status == 'Cancelado' else 'bg-warning text-dark') }}">{{ p.status }}</span></span>
             <span>{{ p.valor | moeda }}</span>
           </li>
           {% endfor %}
         </ul>
+        {% set pendentes = ordem.pagamentos | selectattr('status', 'equalto', 'Pendente') | list %}
+        {% if pendentes %}
+        <form method="POST" action="{{ url_for('ordens.dar_baixa', id=ordem.id) }}" class="border border-success rounded p-2 mt-2">
+          <div class="small fw-semibold text-success mb-2"><i class="bi bi-check2-circle"></i> Dar baixa nos valores pendentes</div>
+          <select name="forma_pagamento" class="form-select form-select-sm mb-2">
+            {% for f in formas_baixa %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+          </select>
+          <input type="date" name="data_pagamento" class="form-control form-control-sm mb-2" value="{{ now_data }}">
+          <button class="btn btn-success btn-sm w-100" onclick="return confirm('Confirmar o recebimento dos valores pendentes desta OS?');"><i class="bi bi-check-lg"></i> Dar baixa</button>
+        </form>
+        {% endif %}
         {% endif %}
       </div>
     </div>

@@ -3,59 +3,74 @@
 {% block title %}Contas a Pagar{% endblock %}
 {% block page_title %}Contas a Pagar{% endblock %}
 {% block topbar_actions %}
-<a href="{{ url_for('financeiro.novo_pagar') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Novo Lançamento</a>
+<a href="{{ url_for('financeiro.novo_pagar') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Novo lançamento</a>
 {% endblock %}
 
 {% block content %}
-<div class="kpi-card mb-3" style="max-width: 320px;">
-  <div class="icon bg-vermelho"><i class="bi bi-arrow-up-circle"></i></div>
-  <div><div class="value">{{ total_pendente | moeda }}</div><div class="label">Total pendente a pagar</div></div>
+{% set titulo_baixa = "Dar baixa — confirmar pagamento" %}
+{% set endpoint = "financeiro.pagar" %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="kpi-card"><div class="icon bg-azul"><i class="bi bi-hourglass-split"></i></div>
+    <div><div class="value">{{ resumo.aberto | moeda }}</div><div class="label">A pagar ({{ resumo.qtd_aberto }})</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi-card"><div class="icon bg-vermelho"><i class="bi bi-exclamation-triangle"></i></div>
+    <div><div class="value">{{ resumo.atrasado | moeda }}</div><div class="label">Em atraso ({{ resumo.qtd_atrasado }})</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi-card"><div class="icon bg-laranja"><i class="bi bi-calendar-day"></i></div>
+    <div><div class="value">{{ resumo.hoje | moeda }}</div><div class="label">Vence hoje</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="kpi-card"><div class="icon bg-verde"><i class="bi bi-cash-coin"></i></div>
+    <div><div class="value">{{ resumo.mes | moeda }}</div><div class="label">Pago no mês</div></div></div></div>
 </div>
 
-<div class="card mb-3">
-  <div class="card-body py-2">
-    <form method="GET" class="d-flex gap-2">
-      <select name="status" class="form-select" style="max-width: 220px;" onchange="this.form.submit()">
-        <option value="">Todos os status</option>
-        {% for s in status_lista %}
-        <option value="{{ s }}" {{ 'selected' if status_filtro == s }}>{{ s }}</option>
-        {% endfor %}
-      </select>
-    </form>
-  </div>
-</div>
+{% include "financeiro/_filtros.html" %}
 
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead><tr><th>Descrição</th><th>Fornecedor</th><th>Categoria</th><th>Origem</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+    <table class="table table-sm table-hover mb-0 grade-densa align-middle">
+      <thead><tr><th>Nº</th><th>Fornecedor</th><th>Descrição</th><th>Categoria</th><th>Vencimento</th><th class="text-end">Valor</th><th>Situação</th><th>Pago em / Forma</th><th class="text-end">Ações</th></tr></thead>
       <tbody>
         {% for c in contas %}
-        <tr>
-          <td>{{ c.descricao }}</td>
+        <tr class="{{ 'table-danger' if c.status == 'Atrasado' else ('' if c.status != 'Cancelado' else 'text-decoration-line-through text-muted') }}">
+          <td>{{ '%03d' % c.id }}</td>
           <td>{{ c.fornecedor_nome or '-' }}</td>
-          <td>{{ c.categoria or '-' }}</td>
-          <td>{{ c.origem }}</td>
+          <td class="small">{{ c.descricao }}{% if c.numero_documento %} <span class="text-muted">· Doc {{ c.numero_documento }}</span>{% endif %}</td>
+          <td class="small">{{ c.categoria or '-' }}</td>
           <td>{{ c.data_vencimento | data }}</td>
-          <td>{{ c.valor | moeda }}</td>
+          <td class="text-end fw-semibold">{{ c.valor | moeda }}</td>
           <td>{{ status_financeiro_badge(c.status) }}</td>
-          <td class="text-end">
+          <td class="small">{% if c.status == 'Pago' %}{{ c.data_pagamento | data }} · {{ c.forma_pagamento }}{% else %}<span class="text-muted">{{ c.forma_pagamento if c.forma_pagamento else '-' }}</span>{% endif %}</td>
+          <td class="text-end text-nowrap">
             {% if c.status in ('Pendente', 'Atrasado') %}
-            <form method="POST" action="{{ url_for('financeiro.baixar_pagar', id=c.id) }}" class="d-inline">
-              <input type="hidden" name="forma_pagamento" value="{{ c.forma_pagamento or 'Dinheiro' }}">
-              <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i> Confirmar Pagamento</button>
+            <button type="button" class="btn btn-sm btn-success py-0" data-baixa
+                    data-action="{{ url_for('financeiro.baixar_pagar', id=c.id) }}"
+                    data-descricao="{{ c.descricao }}{% if c.fornecedor_nome %} — {{ c.fornecedor_nome }}{% endif %}" data-valor="{{ c.valor | moeda }}"
+                    data-forma="{{ c.forma_pagamento if c.forma_pagamento and not c.forma_pagamento.startswith('Venda Futura') else '' }}"
+                    title="Dar baixa (marcar como pago)"><i class="bi bi-check-lg"></i> Dar baixa</button>
+            <a href="{{ url_for('financeiro.editar_pagar', id=c.id) }}" class="btn btn-sm btn-outline-primary py-0" title="Editar"><i class="bi bi-pencil"></i></a>
+            {% elif c.status == 'Pago' %}
+            <form method="POST" action="{{ url_for('financeiro.estornar_pagar', id=c.id) }}" class="d-inline" onsubmit="return confirm('Estornar a baixa? A conta volta para pendente.');">
+              <button class="btn btn-sm btn-outline-secondary py-0" title="Desfazer a baixa"><i class="bi bi-arrow-counterclockwise"></i> Estornar</button>
             </form>
+            {% endif %}
+            {% if c.status != 'Cancelado' %}
             <form method="POST" action="{{ url_for('financeiro.cancelar_pagar', id=c.id) }}" class="d-inline" onsubmit="return confirm('Cancelar esta conta?');">
-              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+              <button class="btn btn-sm btn-outline-danger py-0" title="Cancelar"><i class="bi bi-x-lg"></i></button>
+            </form>
+            {% endif %}
+            {% if true %}
+            <form method="POST" action="{{ url_for('financeiro.excluir_pagar', id=c.id) }}" class="d-inline" onsubmit="return confirm('Excluir este lançamento definitivamente?');">
+              <button class="btn btn-sm btn-outline-dark py-0" title="Excluir"><i class="bi bi-trash"></i></button>
             </form>
             {% endif %}
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="8" class="empty-state"><i class="bi bi-cash-stack"></i>Nenhuma conta a pagar lançada.</td></tr>
+        <tr><td colspan="9" class="empty-state"><i class="bi bi-cash-coin"></i>Nenhuma conta encontrada com esses filtros.</td></tr>
         {% endfor %}
       </tbody>
+      {% if contas %}
+      <tfoot><tr class="fw-bold"><td colspan="5" class="text-end">Total listado (sem canceladas):</td><td class="text-end">{{ total_listado | moeda }}</td><td colspan="3"></td></tr></tfoot>
+      {% endif %}
     </table>
   </div>
 </div>
+{% include "financeiro/_baixa_modal.html" %}
 {% endblock %}

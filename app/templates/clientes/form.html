@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Editar Cliente' if cliente else 'Novo Cliente' }}{% endblock %}
-{% block page_title %}{{ 'Editar Cliente' if cliente else 'Incluindo um novo cliente' }}{% endblock %}
+{% block title %}{{ 'Editar Cliente' if editando else 'Novo Cliente' }}{% endblock %}
+{% block page_title %}{{ 'Editar Cliente' if editando else 'Incluindo um novo cliente' }}{% endblock %}
 
 {% block content %}
 <div class="card">
   <div class="card-body">
-    <form method="POST" id="formCliente">
-      {% if request.args.get('continuar_os') %}
+    <form method="POST" id="formCliente" autocomplete="off" novalidate>
+      {% if request.args.get('continuar_os') or request.form.get('continuar_para_os') %}
       <input type="hidden" name="continuar_para_os" value="1">
       <div class="alert alert-info py-2"><i class="bi bi-info-circle"></i> Após salvar, você seguirá direto para a abertura da Ordem de Serviço.</div>
       {% endif %}
@@ -14,36 +14,37 @@
       <div class="row g-3 mb-2">
         <div class="col-md-8">
           <label class="form-label" id="lblNome">Razão Social / Nome</label>
-          <input type="text" name="nome" class="form-control" required value="{{ cliente.nome if cliente else '' }}">
+          <input type="text" name="nome" id="nome" class="form-control" required maxlength="150" value="{{ c.nome }}">
         </div>
         <div class="col-md-4">
           <label class="form-label">Tipo de pessoa</label>
           <select name="tipo_pessoa" id="tipo_pessoa" class="form-select" required>
             {% for t in tipos_pessoa %}
-            <option value="{{ t }}" {{ 'selected' if cliente and cliente.tipo_pessoa == t }}>{{ t }}</option>
+            <option value="{{ t }}" {{ 'selected' if c.tipo_pessoa == t }}>{{ t }}</option>
             {% endfor %}
           </select>
         </div>
         <div class="col-md-6" id="campoFantasia">
           <label class="form-label">Nome Fantasia <span class="text-muted small">(opcional)</span></label>
-          <input type="text" name="nome_fantasia" class="form-control" value="{{ cliente.nome_fantasia if cliente else '' }}">
+          <input type="text" name="nome_fantasia" class="form-control" maxlength="150" value="{{ c.nome_fantasia }}">
         </div>
         <div class="col-md-6" id="campoContato">
           <label class="form-label">Contato</label>
-          <input type="text" name="contato" class="form-control" value="{{ cliente.contato if cliente else '' }}">
+          <input type="text" name="contato" class="form-control" maxlength="120" value="{{ c.contato }}">
         </div>
 
         <div class="col-md-4">
-          <label class="form-label" id="lblDocumento">CPF / CNPJ</label>
-          <input type="text" name="cpf_cnpj" class="form-control" required value="{{ cliente.cpf_cnpj if cliente else '' }}">
+          <label class="form-label" id="lblDocumento">CPF</label>
+          <input type="text" name="cpf_cnpj" id="cpf_cnpj" class="form-control" required inputmode="numeric" value="{{ c.cpf_cnpj }}">
+          <div class="form-text" id="msgDocumento"></div>
         </div>
         <div class="col-md-4">
           <label class="form-label" id="lblRgIe">RG</label>
-          <input type="text" name="rg_ie" class="form-control" value="{{ cliente.rg_ie if cliente else '' }}">
+          <input type="text" name="rg_ie" class="form-control" maxlength="30" value="{{ c.rg_ie }}">
         </div>
         <div class="col-md-4">
           <label class="form-label">Aniversário</label>
-          <input type="date" name="aniversario" class="form-control" value="{{ cliente.aniversario.isoformat() if cliente and cliente.aniversario else '' }}">
+          <input type="date" name="aniversario" class="form-control" value="{{ c.aniversario.isoformat() if c.aniversario else '' }}">
         </div>
       </div>
 
@@ -51,85 +52,81 @@
       <div class="row g-3 mb-2">
         <div class="col-md-3">
           <label class="form-label">CEP</label>
-          <input type="text" name="cep" class="form-control" value="{{ cliente.cep if cliente else '' }}">
+          <div class="input-group">
+            <input type="text" name="cep" id="cep" class="form-control" inputmode="numeric" placeholder="00000-000" value="{{ c.cep }}">
+            <button type="button" class="btn btn-outline-primary" id="btnCep" title="Buscar endereço pelo CEP"><i class="bi bi-search"></i></button>
+          </div>
+          <div class="form-text" id="msgCep">Digite o CEP e o endereço é preenchido sozinho.</div>
         </div>
         <div class="col-md-6">
           <label class="form-label">Endereço</label>
-          <input type="text" name="endereco" class="form-control" value="{{ cliente.endereco if cliente else '' }}">
+          <input type="text" name="endereco" id="endereco" class="form-control" maxlength="200" value="{{ c.endereco }}">
         </div>
         <div class="col-md-3">
           <label class="form-label">Número</label>
-          <input type="text" name="numero" class="form-control" value="{{ cliente.numero if cliente else '' }}">
+          <input type="text" name="numero" id="numero" class="form-control" maxlength="20" value="{{ c.numero }}">
         </div>
         <div class="col-md-4">
           <label class="form-label">Complemento</label>
-          <input type="text" name="complemento" class="form-control" value="{{ cliente.complemento if cliente else '' }}">
+          <input type="text" name="complemento" class="form-control" maxlength="120" value="{{ c.complemento }}">
         </div>
         <div class="col-md-4">
           <label class="form-label">Bairro</label>
-          <input type="text" name="bairro" class="form-control" value="{{ cliente.bairro if cliente else '' }}">
+          <input type="text" name="bairro" id="bairro" class="form-control" maxlength="100" value="{{ c.bairro }}">
         </div>
         <div class="col-md-2">
           <label class="form-label">Cidade</label>
-          <input type="text" name="cidade" class="form-control" value="{{ cliente.cidade if cliente else '' }}">
+          <input type="text" name="cidade" id="cidade" class="form-control" maxlength="100" value="{{ c.cidade }}">
         </div>
         <div class="col-md-1">
           <label class="form-label">UF</label>
-          <input type="text" name="estado" maxlength="2" class="form-control text-uppercase" value="{{ cliente.estado if cliente else '' }}">
+          <input type="text" name="estado" id="estado" maxlength="2" class="form-control text-uppercase" value="{{ c.estado }}">
         </div>
         <div class="col-md-1">
           <label class="form-label">País</label>
-          <input type="text" name="pais" class="form-control" value="{{ cliente.pais if cliente else 'Brasil' }}">
+          <input type="text" name="pais" class="form-control" maxlength="60" value="{{ c.pais or 'Brasil' }}">
         </div>
       </div>
 
       <div class="form-section-title">Contato</div>
       <div class="row g-3 mb-2">
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label">Telefone</label>
-          <input type="text" name="telefone" class="form-control" required value="{{ cliente.telefone if cliente else '' }}">
+          <input type="text" name="telefone" class="form-control mascara-fone" required inputmode="tel" placeholder="(00) 00000-0000" value="{{ c.telefone }}">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label">Comercial / FAX</label>
-          <input type="text" name="telefone2" class="form-control" value="{{ cliente.telefone2 if cliente else '' }}">
+          <input type="text" name="telefone2" class="form-control mascara-fone" inputmode="tel" value="{{ c.telefone2 }}">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label">Celular / WhatsApp</label>
-          <input type="text" name="celular_whatsapp" class="form-control" value="{{ cliente.celular_whatsapp if cliente else '' }}">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Rádio</label>
-          <input type="text" name="radio" class="form-control" value="{{ cliente.radio if cliente else '' }}">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Site</label>
-          <input type="text" name="site" class="form-control" value="{{ cliente.site if cliente else '' }}">
+          <input type="text" name="celular_whatsapp" class="form-control mascara-fone" inputmode="tel" value="{{ c.celular_whatsapp }}">
         </div>
         <div class="col-md-6">
           <label class="form-label">E-mail</label>
-          <input type="email" name="email" class="form-control" value="{{ cliente.email if cliente else '' }}">
+          <input type="email" name="email" class="form-control" maxlength="150" value="{{ c.email }}">
         </div>
         <div class="col-md-6">
           <label class="form-label">E-mail para notas fiscais</label>
-          <input type="email" name="email_notas_fiscais" class="form-control" value="{{ cliente.email_notas_fiscais if cliente else '' }}">
+          <input type="email" name="email_notas_fiscais" class="form-control" maxlength="150" value="{{ c.email_notas_fiscais }}">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-6">
           <label class="form-label">Grupo</label>
-          <input type="text" name="grupo" class="form-control" value="{{ cliente.grupo if cliente else '' }}">
+          <input type="text" name="grupo" class="form-control" maxlength="60" value="{{ c.grupo }}">
         </div>
-        <div class="col-md-3" id="campoSexo">
+        <div class="col-md-6" id="campoSexo">
           <label class="form-label">Sexo</label>
           <select name="sexo" class="form-select">
             <option value="">-</option>
-            <option value="Masculino" {{ 'selected' if cliente and cliente.sexo == 'Masculino' }}>Masculino</option>
-            <option value="Feminino" {{ 'selected' if cliente and cliente.sexo == 'Feminino' }}>Feminino</option>
+            <option value="Masculino" {{ 'selected' if c.sexo == 'Masculino' }}>Masculino</option>
+            <option value="Feminino" {{ 'selected' if c.sexo == 'Feminino' }}>Feminino</option>
           </select>
         </div>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Observações</label>
-        <textarea name="observacoes" class="form-control" rows="3">{{ cliente.observacoes if cliente else '' }}</textarea>
+        <textarea name="observacoes" class="form-control" rows="3">{{ c.observacoes }}</textarea>
       </div>
 
       <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Gravar</button>
@@ -141,17 +138,133 @@
 
 {% block extra_scripts %}
 <script>
-function ajustarCamposPJ() {
-  const tipo = document.getElementById('tipo_pessoa').value;
-  const ehPJ = tipo === 'Pessoa Jurídica';
-  document.getElementById('campoFantasia').style.display = ehPJ ? '' : 'none';
-  document.getElementById('campoContato').style.display = ehPJ ? '' : 'none';
-  document.getElementById('campoSexo').style.display = ehPJ ? 'none' : '';
-  document.getElementById('lblDocumento').textContent = ehPJ ? 'CNPJ' : 'CPF';
-  document.getElementById('lblRgIe').textContent = ehPJ ? 'Inscrição Estadual' : 'RG';
-  document.getElementById('lblNome').textContent = ehPJ ? 'Razão Social' : 'Nome Completo';
+const $ = (id) => document.getElementById(id);
+const soDigitos = (v) => (v || '').replace(/\D/g, '');
+
+/* ---------- Validação de CPF / CNPJ ---------- */
+function cpfValido(v) {
+  const c = soDigitos(v);
+  if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
+  for (const t of [9, 10]) {
+    let soma = 0;
+    for (let i = 0; i < t; i++) soma += parseInt(c[i]) * (t + 1 - i);
+    if (((soma * 10) % 11) % 10 !== parseInt(c[t])) return false;
+  }
+  return true;
 }
-document.getElementById('tipo_pessoa').addEventListener('change', ajustarCamposPJ);
+function cnpjValido(v) {
+  const c = soDigitos(v);
+  if (c.length !== 14 || /^(\d)\1{13}$/.test(c)) return false;
+  const p1 = [5,4,3,2,9,8,7,6,5,4,3,2], p2 = [6].concat(p1);
+  for (const [pesos, pos] of [[p1, 12], [p2, 13]]) {
+    let soma = 0;
+    for (let i = 0; i < pos; i++) soma += parseInt(c[i]) * pesos[i];
+    const r = soma % 11, d = r < 2 ? 0 : 11 - r;
+    if (d !== parseInt(c[pos])) return false;
+  }
+  return true;
+}
+const ehPJ = () => $('tipo_pessoa').value === 'Pessoa Jurídica';
+
+function mascaraDocumento() {
+  let d = soDigitos($('cpf_cnpj').value).slice(0, ehPJ() ? 14 : 11);   // não deixa digitar a mais
+  let t = d;
+  if (ehPJ()) {
+    t = d.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+         .replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
+  } else {
+    t = d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+         .replace(/\.(\d{3})(\d)/, '.$1-$2');
+  }
+  $('cpf_cnpj').value = t;
+  validarDocumento(false);
+}
+function validarDocumento(final) {
+  const campo = $('cpf_cnpj'), msg = $('msgDocumento');
+  const d = soDigitos(campo.value), esperado = ehPJ() ? 14 : 11;
+  campo.classList.remove('is-valid', 'is-invalid');
+  msg.textContent = ''; msg.className = 'form-text';
+  if (!d) return true;
+  const ok = ehPJ() ? cnpjValido(d) : cpfValido(d);
+  if (ok) { campo.classList.add('is-valid'); msg.textContent = 'Documento válido.'; msg.classList.add('text-success'); return true; }
+  if (d.length === esperado || final) {
+    campo.classList.add('is-invalid');
+    msg.textContent = d.length !== esperado
+      ? (ehPJ() ? 'O CNPJ precisa ter 14 números.' : 'O CPF precisa ter 11 números.')
+      : (ehPJ() ? 'CNPJ inválido.' : 'CPF inválido.');
+    msg.classList.add('text-danger');
+  }
+  return false;
+}
+
+/* ---------- Máscaras ---------- */
+function mascaraFone(el) {
+  const d = soDigitos(el.value).slice(0, 11);
+  let t = d;
+  if (d.length > 10) t = d.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, '($1) $2-$3');
+  else if (d.length > 6) t = d.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+  else if (d.length > 2) t = d.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+  else if (d.length) t = '(' + d;
+  el.value = t;
+}
+document.querySelectorAll('.mascara-fone').forEach(el => el.addEventListener('input', () => mascaraFone(el)));
+
+function mascaraCep() {
+  const d = soDigitos($('cep').value).slice(0, 8);
+  $('cep').value = d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d;
+  if (d.length === 8) buscarCep();
+}
+
+/* ---------- CEP automático (ViaCEP) ---------- */
+let ultimoCep = '';
+async function buscarCep() {
+  const cep = soDigitos($('cep').value), msg = $('msgCep');
+  if (cep.length !== 8) { msg.textContent = 'O CEP precisa ter 8 números.'; msg.className = 'form-text text-danger'; return; }
+  if (cep === ultimoCep) return;
+  ultimoCep = cep;
+  msg.textContent = 'Buscando endereço...'; msg.className = 'form-text text-muted';
+  try {
+    const resp = await fetch('https://viacep.com.br/ws/' + cep + '/json/');
+    const dados = await resp.json();
+    if (dados.erro) { msg.textContent = 'CEP não encontrado. Preencha o endereço manualmente.'; msg.className = 'form-text text-danger'; ultimoCep = ''; return; }
+    if (dados.logradouro) $('endereco').value = dados.logradouro;
+    if (dados.bairro) $('bairro').value = dados.bairro;
+    $('cidade').value = dados.localidade || '';
+    $('estado').value = (dados.uf || '').toUpperCase();
+    msg.textContent = 'Endereço preenchido. Informe o número.'; msg.className = 'form-text text-success';
+    $('numero').focus();
+  } catch (e) {
+    ultimoCep = '';
+    msg.textContent = 'Não foi possível buscar o CEP agora. Preencha manualmente.'; msg.className = 'form-text text-danger';
+  }
+}
+$('cep').addEventListener('input', mascaraCep);
+$('btnCep').addEventListener('click', () => { ultimoCep = ''; buscarCep(); });
+
+/* ---------- Pessoa física x jurídica ---------- */
+function ajustarCamposPJ() {
+  const pj = ehPJ();
+  $('campoFantasia').style.display = pj ? '' : 'none';
+  $('campoContato').style.display = pj ? '' : 'none';
+  $('campoSexo').style.display = pj ? 'none' : '';
+  $('lblDocumento').textContent = pj ? 'CNPJ' : 'CPF';
+  $('lblRgIe').textContent = pj ? 'Inscrição Estadual' : 'RG';
+  $('lblNome').textContent = pj ? 'Razão Social' : 'Nome Completo';
+  $('cpf_cnpj').placeholder = pj ? '00.000.000/0000-00' : '000.000.000-00';
+  mascaraDocumento();
+}
+$('tipo_pessoa').addEventListener('change', ajustarCamposPJ);
+$('cpf_cnpj').addEventListener('input', mascaraDocumento);
+$('formCliente').addEventListener('submit', (e) => {
+  if (!validarDocumento(true)) {
+    e.preventDefault();
+    $('cpf_cnpj').focus();
+    alert(ehPJ() ? 'CNPJ inválido. Confira os 14 números.' : 'CPF inválido. Confira os 11 números.');
+    return;
+  }
+  if (!$('formCliente').checkValidity()) { e.preventDefault(); $('formCliente').reportValidity(); }
+});
 ajustarCamposPJ();
+document.querySelectorAll('.mascara-fone').forEach(mascaraFone);
 </script>
 {% endblock %}
